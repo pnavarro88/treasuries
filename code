@@ -1,0 +1,38 @@
+import pandas as pd
+import datetime
+import numpy as np
+import matplotlib.pyplot as plt
+%matplotlib inline
+from datetime import datetime
+
+UST_30 = pd.read_excel('treasuries_intraday.xlsx','CT30B Govt', index_col='Dates', parse_date=True)
+
+"""Consigo los valores entre 9:30 y 16:00 inclusive. Horas en el que el mercado esta abierto y 
+las columnas que se usaran para los calculos"""
+
+UST_30['first_hr'] = 0
+UST_30['Last_hr'] = 0 
+UST_30['check_day'] = UST_30.Dia
+mask_open = ((UST_30.Hour > 9) & (UST_30.Hour < 16)) 
+
+for key in UST_30.Hour.keys():
+    if UST_30.Hour[key] == 9:
+        UST_30.first_hr[key] = 1
+    elif UST_30.Hour[key] == 16:
+        UST_30.Last_hr[key] = 1
+        
+#mask_close = ((UST_30.Hour >= 9 ) )#& (UST_30.Minute < 30) & (UST_30.Hour > 16)) NOT Done YET
+US_Opened = (UST_30.loc[mask_open])
+#US_Closed = (UST_30.loc[mask_close]) NOT DONE YET
+
+new_mask = ((UST_30.first_hr == 1) & (UST_30.Minute >= 30 ))
+new_mask1 = ((UST_30.Last_hr == 1 ) & (UST_30.Minute == 0))
+first_H = (UST_30.loc[new_mask])
+last_H = (UST_30.loc[new_mask1])
+US_Opened = first_H.append(US_Opened)
+US_Opened = US_Opened.append(last_H)
+US_Opened = US_Opened.sort_index()
+x = US_Opened.check_day.shift(-1)
+US_Opened['Last_day'] = x
+US_Opened.Last_day = US_Opened.Last_day.fillna(US_Opened.Dia)
+
